@@ -1,6 +1,6 @@
 %define module Apache-AuthCAS
 %define name perl-%{module}
-%define version 0.2
+%define version 0.3
 %define release 1
 
 Packager: David Castro <arimus@apu.edu>

@@ -1,6 +1,6 @@
 # Apache::AuthCAS
 # David Castro, April 2004
-# $Revision: 1.4 $
+# $Revision: 1.6 $
 #
 # Apache auth module to protect underlying resources using Yale's Central
 # Authentication service
@@ -534,7 +534,7 @@ sub authenticate($$) {
 	
 		# try to get a session record for the session id we recieved
 		my @session_data; # session id, last accessed, netid, pgtiou
-		if (scalar(@session_data = $self->get_session_data($sid)) > 0) {
+		if (@session_data = $self->get_session_data($sid)) {
 			Apache->warn("$$: CAS: authenticate(): session data: ".join(",",@session_data)) unless ($LOG_LEVEL < $LOG_DEBUG);
 
 			# we found the session id in out session hash
@@ -909,18 +909,18 @@ sub get_proxy_tickets($$) {
 				push(@tickets, $1);
 			} else {
 				Apache->warn("$$: CAS: get_proxy_tickets(): no proxy ticket in response") unless ($LOG_LEVEL < $LOG_DEBUG);
-				return "";
+				return qw();
 			}
 		} else {
 			Apache->warn("$$: CAS: get_proxy_tickets(): unsuccessful proxy request") unless ($LOG_LEVEL < $LOG_DEBUG);
-			return "";
+			return qw();
 		}
 	}
 
-	if (scalar(@tickets) > 0) {
+	if (@tickets) {
 		return @tickets;
 	} else {
-		return "";
+		return qw();
 	}
 }
 
@@ -1256,7 +1256,7 @@ sub do_proxy($$) {
 	Apache->warn("$$: CAS: do_proxy(): PGTIOU='$pgtiou' found in cache, PGT='$pgt'") unless ($LOG_LEVEL < $LOG_DEBUG);
 
 	my @tickets = $self->get_proxy_tickets($pgt, $PROXY_SERVICE, $NUM_PROXY_TICKETS);
-	if (scalar(@tickets)) {
+	if (@tickets) {
 		Apache->warn("$$: CAS: do_proxy(): got PT='".join(',', @tickets)."'") unless ($LOG_LEVEL < $LOG_DEBUG);
 
 		# place headers in request for underlying service
@@ -1333,8 +1333,8 @@ sub do_proxy($$) {
 		Apache->warn("$$: CAS: do_proxy(): deleting session data for sid='$sid'") unless ($LOG_LEVEL < $LOG_DEBUG);
 		$self->delete_session_data($sid);
 
-		Apache->warn("$$: CAS: do_proxy(): redirecting to CAS login") unless ($LOG_LEVEL < $LOG_DEBUG);
-		return $self->redirect_login($r);
+		Apache->warn("$$: CAS: do_proxy(): redirecting to CAS error page") unless ($LOG_LEVEL < $LOG_DEBUG);
+		return $self->redirect($r, $ERROR_URL, $INVALID_PGT_ERROR_CODE);
 	}
 }
 
