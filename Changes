@@ -1,0 +1,17 @@
+Revision history for mod_perl module Apache::AuthCAS
+
+Release 0.1
+===========
+1.3  Wed Sep 15 11:41:00 2004
+	- POD documentation update, had incorrect dependency listed
+	  Net::SSLeay was listed twice instead of including MIME::Base64
+
+1.2  Wed Sep 15 11:26:00 2004
+	- Changed session/pgt cleanup to a more consistent method
+	- Initialization only occurs once, not hitting the directory
+	  config for every protected request
+	- Added ability to masquerade as a "Basic Auth" module
+
+1.0  Fri Aug 13 05:57:00 2004
+	- initial version
+
