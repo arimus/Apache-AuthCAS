@@ -13,3 +13,8 @@ CREATE TABLE cas_pgtiou_to_pgt (
 	pgt			varchar(64) not null,
 	created		int8 not null
 );
+
+--example PostgreSQL indeces
+--CREATE INDEX cas_sessions_id_index ON cas_sessions(id);
+--CREATE INDEX cas_pgtiou_to_pgt_pgtiou_index ON cas_pgtiou_to_pgt(pgtiou);
+--CREATE INDEX cas_sessions_last_accessed_index ON cas_sessions(last_accessed);

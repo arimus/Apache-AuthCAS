@@ -1,6 +1,6 @@
 # Apache::AuthCAS
 # David Castro, April 2004
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 #
 # Apache auth module to protect underlying resources using Yale's Central
 # Authentication service
@@ -135,6 +135,13 @@ my $SESSION_CLEANUP_THRESHOLD = "10";
 # when set to true, this module will attempt to make the underlying authz
 # mechanism believe that "Basic" authentication has occurred
 my $PRETEND_BASIC_AUTH = "0";
+# this will turn on initialization that will only occur once for each apache
+# process, meaning that changes will require a restart.  This has the benefit
+# of speed for high-load sites, but will typically not be what you want.  The
+# config of the first resource protected by AuthCAS will persist for the apache
+# process that served up the request
+my $STATIC_INITIALIZATION = "0";
+
 if (!defined($INITIALIZED)) {
 	# default to not initialized
 	$INITIALIZED = 0;
@@ -410,8 +417,8 @@ sub authenticate($$) {
 	# Only authenticate the first internal request
 	return (MP2 ? Apache::OK : Apache::Constants::OK) unless $r->is_initial_req;
 
-	# get our configuration if we haven't already
-	if (!$INITIALIZED) {
+	# get our configuration, unless we already have and we are running static
+	unless ($STATIC_INITIALIZATION and $INITIALIZED) {
 		$self->initialize($r);
 	}
 
