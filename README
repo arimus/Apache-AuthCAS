@@ -1,5 +1,5 @@
-Apache/AuthCAS version 0.1
-=================================
+Apache/AuthCAS version 0.2
+==========================
 
 The Apache::AuthCAS module allows a user to protect their non-Java content on
 an Apache server with the Yale CAS authentication server.

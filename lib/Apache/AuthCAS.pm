@@ -1,10 +1,10 @@
-# Apache::CAS
+# Apache::AuthCAS
 # David Castro, April 2004
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 #
 # Apache auth module to protect underlying resources using Yale's Central
 # Authentication service
-package Apache::CAS;
+package Apache::AuthCAS;
 
 $^W = 1;
 use diagnostics;

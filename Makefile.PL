@@ -29,7 +29,7 @@ print "\n";
 
 WriteMakefile(
 'NAME' => 'Apache::AuthCAS',
-'VERSION' => '0.1',
+'VERSION' => '0.2',
 'PREREQ_PM' => { "Net::SSLeay" => 0,
                  "MIME::Base64" => 0,
                  "DBI" => 0

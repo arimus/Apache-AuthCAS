@@ -1,5 +1,10 @@
 Revision history for mod_perl module Apache::AuthCAS
 
+Release 0.4
+===========
+1.4  Wed Sep 15 13:07:00 2004
+	- fixed wrong package name Apache::CAS to Apache::AuthCAS
+
 Release 0.1
 ===========
 1.3  Wed Sep 15 11:41:00 2004
