@@ -29,10 +29,10 @@ print "\n";
 
 WriteMakefile(
 'NAME' => 'Apache::AuthCAS',
-'VERSION' => '0.4',
-'PREREQ_PM' => { "Net::SSLeay" => 0,
+'VERSION' => '0.5',
+'PREREQ_PM' => { "Net::SSLeay" => 1,
                  "MIME::Base64" => 0,
-                 "DBI" => 0
+                 "DBI" => 1
                },
 'dist'          => { COMPRESS => 'gzip --best', SUFFIX => 'gz' },
 'ABSTRACT_FROM' => 'lib/Apache/AuthCAS.pm',

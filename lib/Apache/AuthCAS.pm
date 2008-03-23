@@ -941,22 +941,22 @@ sub set_session_data($$) {
 
 	Apache->warn("$$: CAS: set_session_data()") unless ($LOG_LEVEL < $LOG_DEBUG);
 
-	my $dbh = DBI->connect("dbi:Pg:dbname=$DB_NAME;host=$DB_HOST;port=$DB_PORT", $DB_USER, $DB_PASS, { AutoCommit => 1 });
+	my $dbh = DBI->connect("dbi:$DB_DRIVER:dbname=$DB_NAME;host=$DB_HOST;port=$DB_PORT", $DB_USER, $DB_PASS, { AutoCommit => 1 });
 	if (!defined($dbh)) {
 		Apache->warn("$$: CAS: set_session_data(): db connect error: $DBI::errstr") unless ($LOG_LEVEL < $LOG_ERROR);
 		return "";
 	}
 
 	# see if this session already exists
-	my $sth = $dbh->prepare("SELECT id FROM $DB_SESSION_TABLE WHERE id='$sid';");
-	$sth->execute();
+	my $sth = $dbh->prepare("SELECT id FROM $DB_SESSION_TABLE WHERE id=?;");
+	$sth->execute($sid);
 	if ($sth->fetch()) {
 		Apache->warn("$$: CAS: set_session_data(): found session sid='$sid' to update") unless ($LOG_LEVEL < $LOG_DEBUG);
 
 		#print "DEBUG: '$id', '$last_accessed', '$uid', '$pgtiou'\n";
 		Apache->warn("$$: CAS: set_session_data(): SQL: UPDATE $DB_SESSION_TABLE SET last_accessed='$last_accessed', uid='$uid', pgtiou='$pgtiou' WHERE id='$sid';") unless ($LOG_LEVEL < $LOG_DEBUG);
-		my $sth = $dbh->prepare("UPDATE $DB_SESSION_TABLE SET last_accessed='$last_accessed', uid='$uid', pgtiou='$pgtiou' WHERE id='$sid';");
-		$sth->execute();
+		my $sth = $dbh->prepare("UPDATE $DB_SESSION_TABLE SET last_accessed=?, uid=?, pgtiou=? WHERE id=?;");
+		$sth->execute($last_accessed, $uid, $pgtiou, $sid);
 		my $rc = $sth->err;
 
 		# if we have an error when updating the session
@@ -971,8 +971,8 @@ sub set_session_data($$) {
 		Apache->warn("$$: CAS: set_session_data(): creating new session sid='$sid' to update") unless ($LOG_LEVEL < $LOG_DEBUG);
 
 		#print "DEBUG2: '$id', '$last_accessed', '$uid', '$pgtiou'\n";
-		my $sth = $dbh->prepare("INSERT INTO $DB_SESSION_TABLE(id,last_accessed,uid,pgtiou) VALUES('$sid', '$last_accessed', '$uid', '$pgtiou');");
-		$sth->execute();
+		my $sth = $dbh->prepare("INSERT INTO $DB_SESSION_TABLE(id,last_accessed,uid,pgtiou) VALUES(?, ?, ?, ?);");
+		$sth->execute($sid, $last_accessed, $uid, $pgtiou);
 		my $rc = $sth->err;
 
 		# if we have an error when updating the session
@@ -997,13 +997,13 @@ sub get_session_data($$) {
 	Apache->warn("$$: CAS: get_session_data()") unless ($LOG_LEVEL < $LOG_DEBUG);
 
 	# retrieve a session object for this session id
-	my $dbh = DBI->connect("dbi:Pg:dbname=$DB_NAME;host=$DB_HOST;port=$DB_PORT", $DB_USER, $DB_PASS, { AutoCommit => 1 });
+	my $dbh = DBI->connect("dbi:$DB_DRIVER:dbname=$DB_NAME;host=$DB_HOST;port=$DB_PORT", $DB_USER, $DB_PASS, { AutoCommit => 1 });
 	if (!defined($dbh)) {
 		Apache->warn("$$: CAS: get_session_data(): db connect error: $DBI::errstr") unless ($LOG_LEVEL < $LOG_ERROR);
 		return ();
 	}
-	my $sth = $dbh->prepare("SELECT last_accessed, uid, pgtiou FROM $DB_SESSION_TABLE WHERE id='$sid';");
-	$sth->execute();
+	my $sth = $dbh->prepare("SELECT last_accessed, uid, pgtiou FROM $DB_SESSION_TABLE WHERE id=?;");
+	$sth->execute($sid);
 	my ($last_accessed, $uid, $pgtiou);
 	$sth->bind_columns(\$last_accessed, \$uid, \$pgtiou);
 	my $result = $sth->fetch();
@@ -1026,13 +1026,13 @@ sub delete_session_data($$) {
 	Apache->warn("$$: CAS: delete_session_data()") unless ($LOG_LEVEL < $LOG_DEBUG);
 
 	# retrieve a session object for this session id
-	my $dbh = DBI->connect("dbi:Pg:dbname=$DB_NAME;host=$DB_HOST;port=$DB_PORT", $DB_USER, $DB_PASS, { AutoCommit => 1 });
+	my $dbh = DBI->connect("dbi:$DB_DRIVER:dbname=$DB_NAME;host=$DB_HOST;port=$DB_PORT", $DB_USER, $DB_PASS, { AutoCommit => 1 });
 	if (!defined($dbh)) {
 		Apache->warn("$$: CAS: delete_session_data(): db connect error: $DBI::errstr") unless ($LOG_LEVEL < $LOG_ERROR);
 		return "";
 	}
-	my $sth = $dbh->prepare("DELETE FROM $DB_SESSION_TABLE WHERE id='$sid';");
-	$sth->execute();
+	my $sth = $dbh->prepare("DELETE FROM $DB_SESSION_TABLE WHERE id=?");
+	$sth->execute($sid);
 
 	# if we have an error when updating the session
 	my $rc = $sth->err;
@@ -1061,14 +1061,14 @@ sub delete_expired_sessions($$) {
 	Apache->warn("$$: CAS: delete_expired_sessions(): deleting sessions older than '$oldest_valid_time'") unless ($LOG_LEVEL < $LOG_DEBUG);
 
 	# retrieve a session object for this session id
-	my $dbh = DBI->connect("dbi:Pg:dbname=$DB_NAME;host=$DB_HOST;port=$DB_PORT", $DB_USER, $DB_PASS, { AutoCommit => 1 });
+	my $dbh = DBI->connect("dbi:$DB_DRIVER:dbname=$DB_NAME;host=$DB_HOST;port=$DB_PORT", $DB_USER, $DB_PASS, { AutoCommit => 1 });
 	if (!defined($dbh)) {
 		Apache->warn("$$: CAS: delete_expired_sessions(): db connect error: $DBI::errstr") unless ($LOG_LEVEL < $LOG_ERROR);
 		return "";
 	}
 	Apache->warn("$$: CAS: delete_expired_sessions(): SQL: DELETE FROM $DB_SESSION_TABLE WHERE last_accessed<$oldest_valid_time;");
-	my $sth = $dbh->prepare("DELETE FROM $DB_SESSION_TABLE WHERE last_accessed<$oldest_valid_time;");
-	$sth->execute();
+	my $sth = $dbh->prepare("DELETE FROM $DB_SESSION_TABLE WHERE last_accessed < ?;");
+	$sth->execute($oldest_valid_time);
 
 	# if we have an error when updating the session
 	my $rc = $sth->err;
@@ -1095,15 +1095,15 @@ sub set_pgt($$) {
 
 	Apache->warn("$$: CAS: set_pgt()") unless ($LOG_LEVEL < $LOG_DEBUG);
 
-	my $dbh = DBI->connect("dbi:Pg:dbname=$DB_NAME;host=$DB_HOST;port=$DB_PORT", $DB_USER, $DB_PASS, { AutoCommit => 1 });
+	my $dbh = DBI->connect("dbi:$DB_DRIVER:dbname=$DB_NAME;host=$DB_HOST;port=$DB_PORT", $DB_USER, $DB_PASS, { AutoCommit => 1 });
 	if (!defined($dbh)) {
 		Apache->warn("$$: CAS: set_pgt(): db connect error: $DBI::errstr") unless ($LOG_LEVEL < $LOG_ERROR);
 		return "";
 	}
 
 	# see if this pgt already exists
-	my $sth = $dbh->prepare("SELECT pgt FROM $DB_PGTIOU_TABLE WHERE pgtiou='$pgtiou';");
-	$sth->execute();
+	my $sth = $dbh->prepare("SELECT pgt FROM $DB_PGTIOU_TABLE WHERE pgtiou=?;");
+	$sth->execute($pgtiou);
 
 	my $count = $sth->rows;
 	if ($sth->fetch()) {
@@ -1116,8 +1116,8 @@ sub set_pgt($$) {
 
 		#print "DEBUG2: '$pgtiou', '$pgt'\n";
 		my $created = time();
-		my $sth = $dbh->prepare("INSERT INTO $DB_PGTIOU_TABLE values('$pgtiou', '$pgt', '$created');");
-		$sth->execute();
+		my $sth = $dbh->prepare("INSERT INTO $DB_PGTIOU_TABLE values(?, ?, ?);");
+		$sth->execute($pgtiou, $pgt, $created);
 		my $rc = $sth->err;
 
 		# if we have an error when updating the session
@@ -1145,13 +1145,13 @@ sub get_pgt($$) {
 	Apache->warn("$$: CAS: get_pgt(): getting pgtiou/pgt map for pgtiou='$pgtiou'") unless ($LOG_LEVEL < $LOG_DEBUG);
 
 	# retrieve a pgt for this pgtiou
-	my $dbh = DBI->connect("dbi:Pg:dbname=$DB_NAME;host=$DB_HOST;port=$DB_PORT", $DB_USER, $DB_PASS, { AutoCommit => 1 });
+	my $dbh = DBI->connect("dbi:$DB_DRIVER:dbname=$DB_NAME;host=$DB_HOST;port=$DB_PORT", $DB_USER, $DB_PASS, { AutoCommit => 1 });
 	if (!defined($dbh)) {
 		Apache->warn("$$: CAS: get_pgt(): db connect error: $DBI::errstr") unless ($LOG_LEVEL < $LOG_ERROR);
 		return "";
 	}
-	my $sth = $dbh->prepare("SELECT pgt FROM $DB_PGTIOU_TABLE WHERE pgtiou='$pgtiou';");
-	$sth->execute();
+	my $sth = $dbh->prepare("SELECT pgt FROM $DB_PGTIOU_TABLE WHERE pgtiou=?;");
+	$sth->execute($pgtiou);
 	my $pgt;
 	$sth->bind_col(1, \$pgt);
 	my $result = $sth->fetch();
@@ -1174,13 +1174,13 @@ sub delete_pgt($$) {
 	Apache->warn("$$: CAS: delete_pgt()") unless ($LOG_LEVEL < $LOG_DEBUG);
 
 	# retrieve a session object for this session id
-	my $dbh = DBI->connect("dbi:Pg:dbname=$DB_NAME;host=$DB_HOST;port=$DB_PORT", $DB_USER, $DB_PASS, { AutoCommit => 1 });
+	my $dbh = DBI->connect("dbi:$DB_DRIVER:dbname=$DB_NAME;host=$DB_HOST;port=$DB_PORT", $DB_USER, $DB_PASS, { AutoCommit => 1 });
 	if (!defined($dbh)) {
 		Apache->warn("$$: CAS: delete_pgt(): db connect error: $DBI::errstr") unless ($LOG_LEVEL < $LOG_ERROR);
 		return "";
 	}
-	my $sth = $dbh->prepare("DELETE FROM $DB_PGTIOU_TABLE WHERE pgtiou='$pgtiou';");
-	$sth->execute();
+	my $sth = $dbh->prepare("DELETE FROM $DB_PGTIOU_TABLE WHERE pgtiou=?;");
+	$sth->execute($pgtiou);
 
 	# if we have an error when updating the session
 	my $rc = $sth->err;
@@ -1206,15 +1206,15 @@ sub delete_expired_pgts($$) {
 	Apache->warn("$$: CAS: delete_expired_pgts()") unless ($LOG_LEVEL < $LOG_DEBUG);
 
 	# retrieve a session object for this session id
-	my $dbh = DBI->connect("dbi:Pg:dbname=$DB_NAME;host=$DB_HOST;port=$DB_PORT", $DB_USER, $DB_PASS, { AutoCommit => 1 });
+	my $dbh = DBI->connect("dbi:$DB_DRIVER:dbname=$DB_NAME;host=$DB_HOST;port=$DB_PORT", $DB_USER, $DB_PASS, { AutoCommit => 1 });
 	if (!defined($dbh)) {
 		Apache->warn("$$: CAS: delete_expired_pgts(): db connect error: $DBI::errstr") unless ($LOG_LEVEL < $LOG_ERROR);
 		return "";
 	}
 
 	my $oldest_valid_time = time() - $SESSION_TIMEOUT;
-	my $sth = $dbh->prepare("DELETE FROM $DB_PGTIOU_TABLE WHERE pgtiou NOT IN (SELECT pgtiou FROM $DB_SESSION_TABLE) AND created < $oldest_valid_time;");
-	$sth->execute();
+	my $sth = $dbh->prepare("DELETE FROM $DB_PGTIOU_TABLE WHERE pgtiou NOT IN (SELECT pgtiou FROM $DB_SESSION_TABLE) AND created < ?;");
+	$sth->execute($oldest_valid_time);
 
 	# if we have an error when updating the session
 	my $rc = $sth->err;

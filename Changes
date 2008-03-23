@@ -1,5 +1,14 @@
 Revision history for mod_perl module Apache::AuthCAS
 
+Release 0.5
+===========
+Sun Mar 23 15:23:09 PDT 2008
+	- fixed a security vulnerability where a tainted cookie could be sent
+	  by a malicious user and it would be used in an SQL query without
+	  protection against SQL injection.  All database calls have been updated
+	  to use bind parameters to prevent this possibility.
+	- patch to allow for DBs other than PostgreSQL
+
 Release 0.4
 ===========
 1.7  Tue Oct 12 17:33:24 PDT 2004
